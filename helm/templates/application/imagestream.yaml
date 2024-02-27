@@ -15,10 +15,10 @@ spec:
     local: false
   tags:
     - annotations:
-        openshift.io/imported-from: quay.io/modzelewski/quinoa-wind-turbine:{{ .Values.imageTag | default .Chart.AppVersion }}
+        openshift.io/imported-from: {{ coalesce .Values.image "quay.io/modzelewski/quinoa-wind-turbine" }}:{{ .Values.imageTag | default .Chart.AppVersion }}
       from:
         kind: DockerImage
-        name: quay.io/modzelewski/quinoa-wind-turbine:{{ .Values.imageTag | default .Chart.AppVersion }}
+        name: {{ coalesce .Values.image "quay.io/modzelewski/quinoa-wind-turbine" }}:{{ .Values.imageTag | default .Chart.AppVersion }}
       importPolicy:
         importMode: Legacy
       name: {{ .Values.imageTag | default .Chart.AppVersion }}

@@ -9,3 +9,4 @@ stages/prod/sealedsecret.yaml
 
 0-quay-secret.yaml
 0-github-secret.yaml
+helm/charts/*

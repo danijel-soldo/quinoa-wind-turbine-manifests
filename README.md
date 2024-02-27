@@ -8,12 +8,22 @@ The main file here is the `wind-turbine-app.yaml` - file which contains an Appli
 
 For easy install there is a shell script which does all kinds of installations that are needed.
 
+## Fun fact
+
+The application code repository is located in https://github.com/gmodzelewski/quinoa-wind-turbine.
+The configuration (=manifests) repository is located in https://github.com/gmodzelewski/quinoa-wind-turbine-manifests.
+
 ## Installation
 
 1. fork this repo
 2. `0-github-secret.yaml`: fill credentials for github from user settings -> Developer settings -> Personal access tokens -> Fine-grained tokens
 3. `0-quay-secret.yaml`: fill credentials for quay from Robot Accounts -> Create Robot Account -> Kubernetes Secret
-4. run `1-install.sh`
+4. copy image to your quay repo (```skopeo copy docker://quay.io/modzelewski/quinoa-wind-turbine:latest docker://quay.io/<yourname>/quinoa-wind-turbine```)
+5. run `1-install.sh`
+6. wait until everything is deployed
+7. start playing
+
+The dashboard is available under the `.../dashboard` route, username `developer`, password is `password` (can be changed in `/helm/templates/env/gitops-demo-<stage>/secret.yaml`).
 
 **INFO: Install script is work-in-progress. Not all resources, that are used in some steps, are created fast enough. If it doesn't work, just run it multiple times.**
 
