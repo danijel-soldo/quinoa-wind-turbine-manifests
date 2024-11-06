@@ -15,7 +15,7 @@ metadata:
     app.openshift.io/runtime: quarkus
   name: quinoa-wind-turbine
 spec:
-  replicas: 5
+  replicas: {{ coalesce .Values.replicas 5 }}
   revisionHistoryLimit: 10
   selector:
     app: quinoa-wind-turbine

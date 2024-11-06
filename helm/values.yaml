@@ -8,6 +8,7 @@ imageTag: latest # Overwrite this value in the applicationSet - wind-turbine-app
 # followChangesForBranch: # default: empty -> if set, tekton files get created
 stage: dev # must be the name of the stage folder with the config.json
 disableSecretsDeployment: false
+replicas: 5
 
 infinispan:
   images:

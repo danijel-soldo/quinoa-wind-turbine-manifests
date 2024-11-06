@@ -12,13 +12,17 @@ else
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
-  name: openshift-pipelines-operator
+  labels:
+    operators.coreos.com/openshift-pipelines-operator-rh.openshift-operators: ""
+  name: openshift-pipelines-operator-rh
   namespace: openshift-operators
 spec:
   channel: latest
-  name: openshift-pipelines-operator-rh 
-  source: redhat-operators 
-  sourceNamespace: openshift-marketplace 
+  installPlanApproval: Automatic
+  name: openshift-pipelines-operator-rh
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: openshift-pipelines-operator-rh.v1.14.3
 EOF
   # Apply the inline YAML using 'oc apply'
   echo "$YAML_CONTENT" | oc apply -f -
@@ -27,25 +31,29 @@ EOF
 fi
 
 # --- OpenShift GitOps --------------------------------------------------------
-GITOPS_INSTALLED=$(oc get csv -n openshift-operators | grep openshift-gitops)
+GITOPS_INSTALLED=$(oc get csv -n openshift-gitops-operator | grep openshift-gitops)
 
 if [[ $GITOPS_INSTALLED == *"Succeeded"* ]]; then
   echo "✅ OpenShift GitOps"
 else
   echo "Installing OpenShift GitOps..."
-
+  echo "Creating namespace openshift-gitops-operator"
+  $(oc new-project openshift-gitops-operator)
   read -r -d '' YAML_CONTENT <<EOF
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
+  labels:
+    operators.coreos.com/openshift-gitops-operator.openshift-gitops-operator: ""
   name: openshift-gitops-operator
-  namespace: openshift-operators
+  namespace: openshift-gitops-operator
 spec:
-  channel: latest 
+  channel: latest
   installPlanApproval: Automatic
-  name: openshift-gitops-operator 
-  source: redhat-operators 
-  sourceNamespace: openshift-marketplace 
+  name: openshift-gitops-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: openshift-gitops-operator.v1.12.1
 EOF
 
   # Apply the inline YAML using 'oc apply'
@@ -55,6 +63,9 @@ EOF
   sleep 3
   $(oc adm policy add-cluster-role-to-user cluster-admin -z openshift-gitops-argocd-application-controller -n openshift-gitops)
   oc wait --for=condition=initialized --timeout=60s pods -l app.kubernetes.io/name=openshift-gitops-server -n openshift-gitops
+  
+  ## Add edge termination to gitops route
+  oc -n openshift-gitops patch argocd/openshift-gitops --type=merge -p='{"spec":{"server":{"insecure":true,"route":{"enabled":true,"tls":{"insecureEdgeTerminationPolicy":"Redirect","termination":"edge"}}}}}'
 fi
 
 # --- OpenShift Streams -------------------------------------------------------
@@ -78,11 +89,102 @@ spec:
   name: amq-streams
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: amqstreams.v2.4.0-0
+  startingCSV: amqstreams.v2.6.0-1
 EOF
   echo "$YAML_CONTENT" | oc apply -f -
   oc wait --for=condition=initialized --timeout=60s pods -l name=amq-streams-cluster-operator -n openshift-operators
 fi
+
+# # --- Camel K -------------------------------------------------------
+# CAMELK_INSTALLED=$(oc get csv -n openshift-operators | grep red-hat-camel-k-operator)
+# if [[ $CAMELK_INSTALLED == *"Succeeded"* ]]; then
+#   echo "✅ Red Hat Camel K Operator"
+# else
+#   echo "Installing Red Hat Camel K ..."
+
+#   read -r -d '' YAML_CONTENT <<EOF
+# apiVersion: operators.coreos.com/v1alpha1
+# kind: Subscription
+# metadata:
+#   labels:
+#     operators.coreos.com/red-hat-camel-k.openshift-operators: ""
+#   name: red-hat-camel-k
+#   namespace: openshift-operators
+# spec:
+#   channel: 1.10.x
+#   installPlanApproval: Automatic
+#   name: red-hat-camel-k
+#   source: redhat-operators
+#   sourceNamespace: openshift-marketplace
+#   startingCSV: red-hat-camel-k-operator.v1.10.6
+# EOF
+#   echo "$YAML_CONTENT" | oc apply -f -
+#   oc wait --for=condition=initialized --timeout=60s pods -l name=camel-k-operator -n openshift-operators
+# fi
+
+# --- Dev Spaces -------------------------------------------------------
+DEVSPACES_INSTALLED=$(oc get csv -n openshift-operators | grep red-hat-camel-k-operator)
+if [[ $DEVSPACES_INSTALLED == *"Succeeded"* ]]; then
+  echo "✅ OpenShift Dev Spaces Operator"
+else
+  echo "Installing OpenShift Dev Spaces ..."
+
+  read -r -d '' YAML_CONTENT <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    olm.managed: "true"
+    operators.coreos.com/devworkspace-operator.openshift-operators: ""
+  name: devworkspace-operator-fast-redhat-operators-openshift-marketplace
+  namespace: openshift-operators
+spec:
+  channel: fast
+  installPlanApproval: Automatic
+  name: devworkspace-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: devworkspace-operator.v0.26.0
+EOF
+  echo "$YAML_CONTENT" | oc apply -f -
+  oc wait --for=condition=initialized --timeout=60s pods -l app=devspaces-operator -n openshift-operators
+fi
+#   read -r -d '' YAML_CONTENT <<EOF
+# apiVersion: org.eclipse.che/v2
+# kind: CheCluster
+# metadata:
+#   annotations:
+#     che.eclipse.org/checluster-defaults-cleanup: '{"containers.resources":"true","spec.components.dashboard.headerMessage":"true","spec.components.pluginRegistry.openVSXURL":"true","spec.devEnvironments.defaultComponents":"true","spec.devEnvironments.defaultEditor":"true","spec.devEnvironments.disableContainerBuildCapabilities":"true"}'
+#   name: devspaces
+#   namespace: openshift-operators
+# spec:
+#   components:
+#     cheServer:
+#       debug: false
+#       logLevel: INFO
+#     dashboard:
+#       logLevel: ERROR
+#     imagePuller:
+#       enable: false
+#     metrics:
+#       enable: true
+#   devEnvironments:
+#     containerBuildConfiguration:
+#       openShiftSecurityContextConstraint: container-build
+#     defaultNamespace:
+#       autoProvision: true
+#       template: <username>-devspaces
+#     maxNumberOfRunningWorkspacesPerUser: 3
+#     maxNumberOfWorkspacesPerUser: 5
+#     secondsOfInactivityBeforeIdling: 1800
+#     secondsOfRunBeforeIdling: -1
+#     startTimeoutSeconds: 300
+#     storage:
+#       pvcStrategy: per-user
+#   networking: {}
+# fi
+# EOF
+#   echo "$YAML_CONTENT" | oc apply -f -
 
 # --- Bitnami Sealed Secrets -------------------------------------------------------
 SEALEDSECRETS_INSTALLED=$(oc get pods -n kube-system -l app.kubernetes.io/name=sealed-secrets | grep sealed-secrets)

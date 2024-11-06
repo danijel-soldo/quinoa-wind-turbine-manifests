@@ -1,0 +1,43 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: gitops-demo
+  description: The wind turbine race demo
+  annotations:
+    argocd/app-name: gitops-demo-dev
+    backstage.io/kubernetes-id: gitops-demo
+    backstage.io/kubernetes-namespace: gitops-demo-dev
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: gmodzelewski/quinoa-wind-turbine
+    janus-idp.io/tekton-enabled: 'true'
+  tags:
+    - java
+    - quarkus
+    - maven
+    - workshop
+  links:
+    - url: https://console-openshift-console.apps.ocp.ocp-gm.de/dev-pipelines/ns/gitops-demo-dev/
+      title: Pipelines-dev
+      icon: web
+    - url: https://console-openshift-console.apps.ocp.ocp-gm.de/dev-pipelines/ns/gitops-demo-stage/
+      title: Pipelines-stage
+      icon: web
+    - url: https://console-openshift-console.apps.ocp.ocp-gm.de/k8s/ns/gitops-demo-dev/deploymentconfigs/quinoa-wind-turbine
+      title: DeploymentConfig-dev
+      icon: web
+    - url: https://console-openshift-console.apps.ocp.ocp-gm.de/k8s/ns/gitops-demo-stage/deploymentconfigs/quinoa-wind-turbine
+      title: DeploymentConfig-stage
+      icon: web
+    - url: https://console-openshift-console.apps.ocp.ocp-gm.de/k8s/ns/gitops-demo-prod/deploymentconfigs/quinoa-wind-turbine
+      title: DeploymentConfig-prod
+      icon: web
+    - url: https://devspaces${{values.cluster_id}}/#https://github.com/gmodzelewski/quinoa-wind-turbine?che-editor=che-incubator/che-code/latest&devfilePath=devfile.yaml
+      title: OpenShift Dev Spaces (VS Code)
+      icon: web
+    - url: https://devspaces${{values.cluster_id}}/#https://github.com/gmodzelewski/quinoa-wind-turbine-manifests?che-editor=che-incubator/che-code/latest&devfilePath=devfile.yaml
+      title: OpenShift Dev Spaces (VS Code) for Manifests
+      icon: web
+spec:
+  type: service
+  lifecycle: production
+  owner: user:default/gmodzelewski

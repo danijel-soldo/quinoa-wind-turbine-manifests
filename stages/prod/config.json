@@ -4,5 +4,6 @@
   "namespace": "gitops-demo-prod",
   "imageTag": "Release-1.0.0",
   "imageDigest": "false",
-  "followChangesForBranch": ""
+  "followChangesForBranch": "",
+  "replicas": "1"
 }

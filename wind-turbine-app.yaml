@@ -55,6 +55,8 @@ spec:
             value: '{{stage}}'
           - name: disableSecretsDeployment
             value: 'true'
+          - name: replicas
+            value: '{{replicas}}'
       destination:
         server: '{{url}}' 
         namespace: '{{namespace}}'
