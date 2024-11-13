@@ -1,5 +1,5 @@
 {{- if .Values.followChangesForBranch }}
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   annotations:
@@ -70,7 +70,6 @@ spec:
   steps:
     - image: 'registry.access.redhat.com/ubi8/ubi-minimal:8.2'
       name: mvn-settings
-      resources: {}
       script: >
         #!/usr/bin/env bash
 
@@ -155,7 +154,6 @@ spec:
         - /usr/bin/mvn
       image: $(params.MAVEN_IMAGE)
       name: mvn-goals
-      resources: {}
       workingDir: $(workspaces.source.path)/$(params.CONTEXT_DIR)
   workspaces:
     - description: The workspace consisting of maven project.

@@ -1,5 +1,5 @@
 {{- if .Values.followChangesForBranch }}
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   annotations:
@@ -32,21 +32,18 @@ spec:
   steps:
   - image: docker.io/alpine/git:v2.26.2
     name: git-clone
-    resources: {}
     script: |
       rm -rf git-update-digest-workdir
       git clone $(params.GIT_REPOSITORY) -b $(params.GIT_REF) git-update-digest-workdir
     workingDir: $(workspaces.workspace.path)
   - image: docker.io/endeveit/docker-jq:latest
     name: set-image-tag
-    resources: {}
     script: |
       cd git-update-digest-workdir/$(params.CONFIG_JSON_PATH)
       jq '.imageDigest = "$(params.NEW_DIGEST)"' config.json > temp.json && mv temp.json config.json
     workingDir: $(workspaces.workspace.path)
   - image: docker.io/alpine/git:v2.26.2
     name: git-commit
-    resources: {}
     script: |
       cd git-update-digest-workdir
       git config user.email "tektonbot@redhat.com"
